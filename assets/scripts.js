@@ -8,8 +8,8 @@ const transferSender = transferForm.querySelector('#transferSender');
 const transferRecipient = transferForm.querySelector('#transferRecipient');
 const transferAmount = transferForm.querySelector('#transferAmount');
 
-const userList = document.querySelector('.userList');
-const history = document.querySelector('.history');
+const accountList = document.querySelector('.account__list');
+const history = document.querySelector('.history__list');
 
 // States
 const state = {
@@ -56,19 +56,29 @@ const updateUserData = (senderID, recipientID, amount) => {
 		`${sender.user.name} isimli kullanicinin guncel bakiyesi ${sender.user.balance}₺.`,
 		`${recipient.user.name} isimli kullanicinin guncel bakiyesi ${recipient.user.balance}₺.`,
 	]);
-
-	// render cagiriliyor
-	renderApp();
 };
 
 // Components
 // <li> Element Creator
 const Li = (props = {}) => {
 	let li = document.createElement('li');
-	li.className = `listItem${props.className ? props.className : ''}`;
-	li.textContent = `${props.text ? props.text : ''}`;
+	li.className = `list-item ${props.className ? props.className : ''}`;
+	if (Array.isArray(props.text) && props.text.length > 0) {
+		for (item of props.text) li.appendChild(item);
+	} else {
+		li.textContent = props.text ? props.text : '';
+	}
 
 	return li;
+};
+
+// <span> Element Creator
+const Span = (props = {}) => {
+	let span = document.createElement('span');
+	span.className = 'list-item__span';
+	span.textContent = `${props.text ? props.text : ''}`;
+
+	return span;
 };
 
 // <option> Element Creator
@@ -82,13 +92,13 @@ const Option = (props = {}) => {
 };
 
 // Renders
-const renderUserList = () => {
+const renderAccountList = () => {
 	// Kullanici listesi temizlenip guncelleniyor.
-	userList.textContent = '';
+	accountList.textContent = '';
 	for (let user of state.userData) {
-		userList.appendChild(
+		accountList.appendChild(
 			Li({
-				text: `${user.name} ${user.balance}₺`,
+				text: [Span({ text: user.name }), Span({ text: `${user.balance}₺` })],
 			})
 		);
 	}
@@ -130,7 +140,7 @@ const renderOptions = () => {
 const renderApp = () => {
 	// App render cagirildiginda
 	// Ekrandaki Uc alan yeniden olusturuluyor
-	renderUserList();
+	renderAccountList();
 	renderHistoryList();
 	renderOptions();
 };
