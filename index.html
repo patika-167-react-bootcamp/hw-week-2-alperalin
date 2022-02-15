@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./assets/style.css">
+    <title>Patika HW2</title>
+</head>
+
+<body>
+    <div class="container">
+        <div class="content-left">
+            <form class="form form-user">
+                <input id="userFullName" type="text" class="form__input" name="userFullName" value=""
+                    placeholder="Kullanicinin adi ve soyadi" autocomplete="off" required />
+                <input id="userBalance" type="text" class="form__input" name="userBalance" value=""
+                    placeholder="Kullanicinin bakiyesi" autocomplete="off" required />
+                <button class="form__button" type="submit">Ekle</button>
+            </form>
+
+            <ul class="userList"></ul>
+        </div>
+        <div class="content-right">
+            <form class="form form-transfer">
+                <select name="sender" id="transferSender">
+                    <option selected>Gonderici Seciniz</option>
+                </select>
+                <select name="recipient" id="transferRecipient">
+                    <option selected>Alici Seciniz</option>
+                </select>
+                <input id="transferAmount" type="text" class="form__input" name="transferValue" value=""
+                    placeholder="Gonderilecek miktar" autocomplete="off" required />
+                <button class="form__button" type="submit">Ekle</button>
+            </form>
+
+            <ul class="history"></ul>
+        </div>
+    </div>
+
+    <script src="./assets/scripts.js"></script>
+</body>
+
+</html>
