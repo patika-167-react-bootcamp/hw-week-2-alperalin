@@ -8,13 +8,13 @@ const transferSender = transferForm.querySelector('#transferSender');
 const transferRecipient = transferForm.querySelector('#transferRecipient');
 const transferAmount = transferForm.querySelector('#transferAmount');
 
-const accountList = document.querySelector('.account__list');
-const history = document.querySelector('.history__list');
+const accountListEl = document.querySelector('.account__list');
+const historyListEl = document.querySelector('.history__list');
 
 // States
 const state = {
 	userData: [],
-	historyList: [],
+	historyState: [],
 };
 
 const setState = (stateName, newState) => {
@@ -22,7 +22,7 @@ const setState = (stateName, newState) => {
 	renderApp();
 };
 
-// Updater
+// Update User Data
 const updateUserData = (senderID, recipientID, amount) => {
 	// Kullanici objelerini ve indekslerini al
 	let index = '';
@@ -50,11 +50,32 @@ const updateUserData = (senderID, recipientID, amount) => {
 	recipient.user.balance += amount;
 
 	// history guncelliyor
-	setState('historyList', [
-		...state.historyList,
+	setState('historyState', [
+		...state.historyState,
 		`${sender.user.name} isimli kullanici tarafinda ${recipient.user.name} isimli kullaniciya ${amount}₺ gonderildi.`,
 		`${sender.user.name} isimli kullanicinin guncel bakiyesi ${sender.user.balance}₺.`,
 		`${recipient.user.name} isimli kullanicinin guncel bakiyesi ${recipient.user.balance}₺.`,
+	]);
+};
+
+// Delete User Data
+const deleteUserData = (userID, userName) => {
+	// Kullanici indeksi bulunuyor
+	const userIndex = state.userData.findIndex((user) => user.id === userID);
+
+	// Kullanici bulunamazsa konsola hata mesaji gonderiliyor
+	if (userIndex === -1)
+		throw new Error(
+			`${userID} id numarasi ile tanimlanmis kullanici bulunmuyor`
+		);
+
+	// Kullanici siliniyor.
+	state.userData.splice(userIndex, 1);
+
+	// history guncelliyor
+	setState('historyState', [
+		...state.historyState,
+		`${userName} isimli kullanicinin hesabi silindi.`,
 	]);
 };
 
@@ -81,6 +102,15 @@ const Span = (props = {}) => {
 	return span;
 };
 
+// <button> Element Creator
+const Button = (props = {}) => {
+	let button = document.createElement('button');
+	button.className = 'list-item__button';
+	button.textContent = `${props.text ? props.text : ''}`;
+
+	return button;
+};
+
 // <option> Element Creator
 const Option = (props = {}) => {
 	let option = document.createElement('option');
@@ -94,11 +124,24 @@ const Option = (props = {}) => {
 // Renders
 const renderAccountList = () => {
 	// Kullanici listesi temizlenip guncelleniyor.
-	accountList.textContent = '';
+	accountListEl.textContent = '';
 	for (let user of state.userData) {
-		accountList.appendChild(
+		let buttonEl = Button({ text: 'Sil' });
+		buttonEl.addEventListener(
+			'click',
+			() => deleteUserData(user.id, user.name),
+			{
+				once: true,
+			}
+		);
+
+		accountListEl.appendChild(
 			Li({
-				text: [Span({ text: user.name }), Span({ text: `${user.balance}₺` })],
+				text: [
+					Span({ text: user.name }),
+					Span({ text: `${user.balance}₺` }),
+					buttonEl,
+				],
 			})
 		);
 	}
@@ -106,9 +149,9 @@ const renderAccountList = () => {
 
 const renderHistoryList = () => {
 	// History alani temizlenip guncelleniyor
-	history.textContent = '';
-	for (let item of state.historyList) {
-		history.appendChild(
+	historyListEl.textContent = '';
+	for (let item of state.historyState) {
+		historyListEl.appendChild(
 			Li({
 				text: `${item}`,
 			})
@@ -161,8 +204,8 @@ const addNewUser = (event) => {
 	]);
 
 	// history guncelleniyor.
-	setState('historyList', [
-		...state.historyList,
+	setState('historyState', [
+		...state.historyState,
 		`${userFormFullName.value} isimli kullanici eklendi.`,
 	]);
 

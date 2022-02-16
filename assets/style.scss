@@ -4,6 +4,7 @@ $borderColor: #666666;
 $borderColor50: rgba(102, 102, 102, 0.5);
 $textColor: #172617;
 $buttonBgColor: #8859b6;
+$buttonDeleteBgColor: #dc2a2a;
 $buttonTextColor: #ffffff;
 
 * {
@@ -144,7 +145,7 @@ h4 {
 	}
 
 	&__sub-title {
-		max-width: calc(50% - 5px);
+		max-width: 50%;
 		width: 100%;
 		margin: 0 0 5px 0;
 	}
@@ -173,8 +174,28 @@ h4 {
 
 		&__span {
 			display: block;
-			max-width: calc(50% - 5px);
+			max-width: 50%;
 			width: 100%;
+
+			&:nth-of-type(2) {
+				max-width: 40%;
+			}
+		}
+
+		&__button {
+			@extend .form__button;
+			max-width: 10%;
+			background-color: $buttonDeleteBgColor;
+			font-size: 16px;
+			padding: 4px;
+			margin: 0;
+
+			&:hover,
+			&:focus,
+			&:focus-within {
+				color: $buttonDeleteBgColor;
+				border-color: $buttonDeleteBgColor;
+			}
 		}
 	}
 }
