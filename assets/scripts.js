@@ -22,10 +22,30 @@ const setState = (stateName, newState) => {
 	renderApp();
 };
 
-// Update User Data
-const updateUserData = (senderID, recipientID, amount) => {
+// Delete User Data
+const deleteUser = (userID, userName) => {
+	// Kullanici indeksi bulunuyor
+	const userIndex = state.userData.findIndex((user) => user.id === userID);
+
+	// Kullanici siliniyor.
+	state.userData.splice(userIndex, 1);
+
+	// history guncelliyor
+	setState('historyState', [
+		{
+			type: 'userRemove',
+			id: Math.round(Math.random() * 1000),
+			text: `${userName} isimli kullanicinin hesabi silindi.`,
+		},
+		...state.historyState,
+	]);
+};
+
+// Update User Balance
+const updateUserBalance = (senderID, recipientID, amount) => {
 	// Kullanici objelerini ve indekslerini al
 	let index = '';
+
 	const sender = {
 		user: state.userData.find((user, i) => {
 			if (user.id === senderID) {
@@ -45,38 +65,18 @@ const updateUserData = (senderID, recipientID, amount) => {
 		index,
 	};
 
+	// Kullanicilardan biri silindiyse
+	// hata mesaji gosterilip islem sonlaniyor
+	if (!sender.user || !recipient.user) {
+		return -1;
+	}
+
 	// Bakiyeler duzenleniyor
 	sender.user.balance -= amount;
 	recipient.user.balance += amount;
 
-	// history guncelliyor
-	setState('historyState', [
-		...state.historyState,
-		`${sender.user.name} isimli kullanici tarafinda ${recipient.user.name} isimli kullaniciya ${amount}₺ gonderildi.`,
-		`${sender.user.name} isimli kullanicinin guncel bakiyesi ${sender.user.balance}₺.`,
-		`${recipient.user.name} isimli kullanicinin guncel bakiyesi ${recipient.user.balance}₺.`,
-	]);
-};
-
-// Delete User Data
-const deleteUserData = (userID, userName) => {
-	// Kullanici indeksi bulunuyor
-	const userIndex = state.userData.findIndex((user) => user.id === userID);
-
-	// Kullanici bulunamazsa konsola hata mesaji gonderiliyor
-	if (userIndex === -1)
-		throw new Error(
-			`${userID} id numarasi ile tanimlanmis kullanici bulunmuyor`
-		);
-
-	// Kullanici siliniyor.
-	state.userData.splice(userIndex, 1);
-
-	// history guncelliyor
-	setState('historyState', [
-		...state.historyState,
-		`${userName} isimli kullanicinin hesabi silindi.`,
-	]);
+	// Islem olumlu sonlandigina dair donus yapiliyor.
+	return { sender, recipient, amount };
 };
 
 // Components
@@ -127,13 +127,9 @@ const renderAccountList = () => {
 	accountListEl.textContent = '';
 	for (let user of state.userData) {
 		let buttonEl = Button({ text: 'Sil' });
-		buttonEl.addEventListener(
-			'click',
-			() => deleteUserData(user.id, user.name),
-			{
-				once: true,
-			}
-		);
+		buttonEl.addEventListener('click', () => deleteUser(user.id, user.name), {
+			once: true,
+		});
 
 		accountListEl.appendChild(
 			Li({
@@ -153,10 +149,15 @@ const renderHistoryList = () => {
 	for (let item of state.historyState) {
 		historyListEl.appendChild(
 			Li({
-				text: `${item}`,
+				className: item.className ? item.className : '',
+				text: item.button
+					? [Span({ text: item.text }), item.button]
+					: `${item.text}`,
 			})
 		);
 	}
+
+	console.log(state.historyState);
 };
 
 const renderOptions = () => {
@@ -193,25 +194,33 @@ const addNewUser = (event) => {
 	// Formun submit edilmesi engelleniyor
 	event.preventDefault();
 
-	// userData'ya yeni kullanici ekleniyor.
-	setState('userData', [
-		...state.userData,
-		{
-			id: Math.round(Math.random() * 1000),
-			name: userFormFullName.value,
-			balance: Math.floor(userFormBalance.value),
-		},
-	]);
-
-	// history guncelleniyor.
-	setState('historyState', [
-		...state.historyState,
-		`${userFormFullName.value} isimli kullanici eklendi.`,
-	]);
+	// Yeni kullanici bilgileri bir degiskene ataniyor
+	const newUser = {
+		id: Math.round(Math.random() * 1000),
+		name: userFormFullName.value,
+		balance: Math.floor(userFormBalance.value),
+	};
 
 	// form input'lari temizleniyor
 	userFormFullName.value = '';
 	userFormBalance.value = '';
+
+	// userData'ya yeni kullanici ekleniyor.
+	setState('userData', [...state.userData, { ...newUser }]);
+
+	// history guncelleniyor.
+	setState('historyState', [
+		{
+			type: 'userAdd',
+			id: Math.round(Math.random() * 1000),
+			user: {
+				id: newUser.id,
+				name: newUser.name,
+			},
+			text: `${newUser.name} isimli kullanici eklendi.`,
+		},
+		...state.historyState,
+	]);
 };
 
 const transfer = (event) => {
@@ -223,11 +232,117 @@ const transfer = (event) => {
 	const recipientID = parseInt(transferRecipient.value);
 	const amount = parseFloat(transferAmount.value);
 
-	// userData'nin guncellenmesi icin updateUserData fonksiyonu cagiriliyor
-	updateUserData(senderID, recipientID, amount);
+	// userData'nin guncellenmesi icin updateUserBalance fonksiyonu cagiriliyor
+	const result = updateUserBalance(senderID, recipientID, amount);
+	const transactionID = Math.round(Math.random() * 1000);
 
 	// form input'lari temizleniyor
 	transferAmount.value = '';
+
+	// 'Geri Al' butonu olusturuluyor
+	const buttonEl = Button({ text: 'Geri Al' });
+	buttonEl.addEventListener(
+		'click',
+		() => {
+			// Islemin geri alinabilmesi icin revoke fonksiyonu butona ataniyor
+			revoke(transactionID);
+		},
+		{
+			once: true,
+		}
+	);
+
+	// History guncelleniyor
+	setState('historyState', [
+		{
+			type: 'transfer',
+			id: transactionID,
+			sender: {
+				id: result.sender.user.id,
+				name: result.sender.user.name,
+			},
+			recipient: {
+				id: result.recipient.user.id,
+				name: result.recipient.user.name,
+			},
+			amount: result.amount,
+			text: `${result.sender.user.name} isimli kullanici tarafinda ${result.recipient.user.name} isimli kullaniciya ${result.amount}₺ tutarinda transfer islemi yapildi.`,
+			button: buttonEl,
+		},
+		{
+			type: 'notify',
+			id: Math.round(Math.random() * 1000),
+			text: `${result.sender.user.name} isimli kullanicinin guncel bakiyesi ${result.sender.user.balance}₺.`,
+		},
+		{
+			type: 'notify',
+			id: Math.round(Math.random() * 1000),
+			text: `${result.recipient.user.name} isimli kullanicinin guncel bakiyesi ${result.recipient.user.balance}₺.`,
+		},
+		...state.historyState,
+	]);
+};
+
+const revoke = (transactionID) => {
+	// transactionID uzerinden historyState icerisinde
+	// islem bulunuyor.
+	const transaction = state.historyState.find(
+		(item) => item.id === transactionID
+	);
+
+	// Transaction uzerindeki buton siliniyor.
+	transaction.button = '';
+
+	// userData'nin guncellenmesi icin updateUserBalance fonksiyonu cagiriliyor
+	const result = updateUserBalance(
+		transaction.recipient.id,
+		transaction.sender.id,
+		transaction.amount
+	);
+
+	// Eger bir kullanici silindiyse history hata mesaji ile guncelleniyor.
+	// Ve islem durduruluyor
+	if (result === -1) {
+		setState('historyState', [
+			{
+				type: 'notify',
+				id: Math.round(Math.random() * 1000),
+				className: 'list-item--warning',
+				text: `Kullanicilardan biri silindigi icin bu islem geri alinamaz`,
+			},
+			...state.historyState,
+		]);
+		return;
+	}
+
+	// History guncelleniyor
+	setState('historyState', [
+		{
+			type: 'revoke',
+			id: Math.round(Math.random() * 1000),
+			sender: {
+				id: result.sender.user.id,
+				name: result.sender.user.name,
+			},
+			recipient: {
+				id: result.recipient.user.id,
+				name: result.recipient.user.name,
+			},
+			amount: result.amount,
+			text: `${result.recipient.user.name} isimli kullanici tarafinda ${result.sender.user.name} isimli kullaniciya yapilan ${result.amount}₺ tutarindaki transfer islemi iptal edildi.`,
+		},
+		{
+			type: 'notify',
+			id: Math.round(Math.random() * 1000),
+			text: `${result.sender.user.name} isimli kullanicinin guncel bakiyesi ${result.sender.user.balance}₺.`,
+		},
+		{
+			type: 'notify',
+			id: Math.round(Math.random() * 1000),
+			text: `${result.recipient.user.name} isimli kullanicinin guncel bakiyesi ${result.recipient.user.balance}₺.`,
+		},
+		...state.historyState,
+	]);
 };
 
 // Form'lara submit event listener'i ekleniyor.
