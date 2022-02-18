@@ -8,6 +8,10 @@ const transferSender = transferForm.querySelector('#transferSender');
 const transferRecipient = transferForm.querySelector('#transferRecipient');
 const transferAmount = transferForm.querySelector('#transferAmount');
 
+const filterEl = document.querySelector('.filter');
+const filterType = filterEl.querySelector('#filterType');
+const filterUser = filterEl.querySelector('#filterUser');
+
 const accountListEl = document.querySelector('.account__list');
 const historyListEl = document.querySelector('.history__list');
 
@@ -17,179 +21,14 @@ const state = {
 	historyState: [],
 };
 
+// Functions
+// Set State fonksiyonu
 const setState = (stateName, newState) => {
 	state[stateName] = newState;
 	renderApp();
 };
 
-// Delete User Data
-const deleteUser = (userID, userName) => {
-	// Kullanici indeksi bulunuyor
-	const userIndex = state.userData.findIndex((user) => user.id === userID);
-
-	// Kullanici siliniyor.
-	state.userData.splice(userIndex, 1);
-
-	// history guncelliyor
-	setState('historyState', [
-		{
-			type: 'userRemove',
-			id: Math.round(Math.random() * 1000),
-			text: `${userName} isimli kullanicinin hesabi silindi.`,
-		},
-		...state.historyState,
-	]);
-};
-
-// Update User Balance
-const updateUserBalance = (senderID, recipientID, amount) => {
-	// Kullanici objelerini ve indekslerini al
-	let index = '';
-
-	const sender = {
-		user: state.userData.find((user, i) => {
-			if (user.id === senderID) {
-				index = i;
-				return user;
-			}
-		}),
-		index,
-	};
-	const recipient = {
-		user: state.userData.find((user, i) => {
-			if (user.id === recipientID) {
-				index = i;
-				return user;
-			}
-		}),
-		index,
-	};
-
-	// Kullanicilardan biri silindiyse
-	// hata mesaji gosterilip islem sonlaniyor
-	if (!sender.user || !recipient.user) {
-		return -1;
-	}
-
-	// Bakiyeler duzenleniyor
-	sender.user.balance -= amount;
-	recipient.user.balance += amount;
-
-	// Islem olumlu sonlandigina dair donus yapiliyor.
-	return { sender, recipient, amount };
-};
-
-// Components
-// <li> Element Creator
-const Li = (props = {}) => {
-	let li = document.createElement('li');
-	li.className = `list-item ${props.className ? props.className : ''}`;
-	if (Array.isArray(props.text) && props.text.length > 0) {
-		for (item of props.text) li.appendChild(item);
-	} else {
-		li.textContent = props.text ? props.text : '';
-	}
-
-	return li;
-};
-
-// <span> Element Creator
-const Span = (props = {}) => {
-	let span = document.createElement('span');
-	span.className = 'list-item__span';
-	span.textContent = `${props.text ? props.text : ''}`;
-
-	return span;
-};
-
-// <button> Element Creator
-const Button = (props = {}) => {
-	let button = document.createElement('button');
-	button.className = 'list-item__button';
-	button.textContent = `${props.text ? props.text : ''}`;
-
-	return button;
-};
-
-// <option> Element Creator
-const Option = (props = {}) => {
-	let option = document.createElement('option');
-	option.value = props.id ? props.id : '';
-	option.selected = props.selected ? true : false;
-	option.textContent = `${props.name}`;
-
-	return option;
-};
-
-// Renders
-const renderAccountList = () => {
-	// Kullanici listesi temizlenip guncelleniyor.
-	accountListEl.textContent = '';
-	for (let user of state.userData) {
-		let buttonEl = Button({ text: 'Sil' });
-		buttonEl.addEventListener('click', () => deleteUser(user.id, user.name), {
-			once: true,
-		});
-
-		accountListEl.appendChild(
-			Li({
-				text: [
-					Span({ text: user.name }),
-					Span({ text: `${user.balance}₺` }),
-					buttonEl,
-				],
-			})
-		);
-	}
-};
-
-const renderHistoryList = () => {
-	// History alani temizlenip guncelleniyor
-	historyListEl.textContent = '';
-	for (let item of state.historyState) {
-		historyListEl.appendChild(
-			Li({
-				className: item.className ? item.className : '',
-				text: item.button
-					? [Span({ text: item.text }), item.button]
-					: `${item.text}`,
-			})
-		);
-	}
-
-	console.log(state.historyState);
-};
-
-const renderOptions = () => {
-	// Her Render'da secim elemanlari temizleniyor
-	// ve varsayilan secenek giriliyor
-	transferSender.textContent = '';
-	transferSender.appendChild(
-		Option({ name: 'Gonderici Seciniz', selected: true })
-	);
-
-	transferRecipient.textContent = '';
-	transferRecipient.appendChild(
-		Option({ name: 'Alici Seciniz', selected: true })
-	);
-
-	// UserData'dan kullanici isimleri
-	// secenek olarak giriliyor.
-	for (let user of state.userData) {
-		transferSender.appendChild(Option(user));
-		transferRecipient.appendChild(Option(user));
-	}
-};
-
-const renderApp = () => {
-	// App render cagirildiginda
-	// Ekrandaki Uc alan yeniden olusturuluyor
-	renderAccountList();
-	renderHistoryList();
-	renderOptions();
-};
-
-// Functions
+// Yeni kullanici ekleme fonksiyonu
 const addNewUser = (event) => {
 	// Formun submit edilmesi engelleniyor
 	event.preventDefault();
@@ -223,6 +62,65 @@ const addNewUser = (event) => {
 	]);
 };
 
+// Kullanici silme fonksiyonu
+const deleteUser = (userID, userName) => {
+	// Kullanici indeksi bulunuyor
+	const userIndex = state.userData.findIndex((user) => user.id === userID);
+
+	// Kullanici siliniyor.
+	state.userData.splice(userIndex, 1);
+
+	// History guncelliyor
+	setState('historyState', [
+		{
+			type: 'userRemove',
+			id: Math.round(Math.random() * 1000),
+			text: `${userName} isimli kullanicinin hesabi silindi.`,
+		},
+		...state.historyState,
+	]);
+};
+
+// Kullanici bakiyesini guncelleme fonksiyonu
+const updateUserBalance = (senderID, recipientID, amount) => {
+	// Kullanici objelerini ve indekslerini al
+	let index = '';
+
+	const sender = {
+		user: state.userData.find((user, i) => {
+			if (user.id === senderID) {
+				index = i;
+				return user;
+			}
+		}),
+		index,
+	};
+
+	const recipient = {
+		user: state.userData.find((user, i) => {
+			if (user.id === recipientID) {
+				index = i;
+				return user;
+			}
+		}),
+		index,
+	};
+
+	// Kullanicilardan biri silindiyse
+	// islem durdurulup olumsuz donusu yapiliyor
+	if (!sender.user || !recipient.user) {
+		return -1;
+	}
+
+	// Bakiyeler duzenleniyor
+	sender.user.balance -= amount;
+	recipient.user.balance += amount;
+
+	// Islem olumlu sonuclandigi icin bilgiler donuluyor.
+	return { sender, recipient, amount };
+};
+
+// Transfer fonksiyonu
 const transfer = (event) => {
 	// Formun submit edilmesi engelleniyor
 	event.preventDefault();
@@ -266,23 +164,32 @@ const transfer = (event) => {
 				name: result.recipient.user.name,
 			},
 			amount: result.amount,
-			text: `${result.sender.user.name} isimli kullanici tarafinda ${result.recipient.user.name} isimli kullaniciya ${result.amount}₺ tutarinda transfer islemi yapildi.`,
+			text: `${result.sender.user.name} isimli kullanici tarafindan ${result.recipient.user.name} isimli kullaniciya ${result.amount}₺ tutarinda transfer islemi yapildi.`,
 			button: buttonEl,
 		},
 		{
 			type: 'notify',
 			id: Math.round(Math.random() * 1000),
+			user: {
+				id: result.sender.user.id,
+				name: result.sender.user.name,
+			},
 			text: `${result.sender.user.name} isimli kullanicinin guncel bakiyesi ${result.sender.user.balance}₺.`,
 		},
 		{
 			type: 'notify',
 			id: Math.round(Math.random() * 1000),
+			user: {
+				id: result.recipient.user.id,
+				name: result.recipient.user.name,
+			},
 			text: `${result.recipient.user.name} isimli kullanicinin guncel bakiyesi ${result.recipient.user.balance}₺.`,
 		},
 		...state.historyState,
 	]);
 };
 
+// Yapilan transferi geri alma fonksiyonu
 const revoke = (transactionID) => {
 	// transactionID uzerinden historyState icerisinde
 	// islem bulunuyor.
@@ -329,22 +236,214 @@ const revoke = (transactionID) => {
 				name: result.recipient.user.name,
 			},
 			amount: result.amount,
-			text: `${result.recipient.user.name} isimli kullanici tarafinda ${result.sender.user.name} isimli kullaniciya yapilan ${result.amount}₺ tutarindaki transfer islemi iptal edildi.`,
+			text: `${result.recipient.user.name} isimli kullanici tarafindan ${result.sender.user.name} isimli kullaniciya yapilan ${result.amount}₺ tutarindaki transfer islemi iptal edildi.`,
 		},
 		{
 			type: 'notify',
 			id: Math.round(Math.random() * 1000),
+			user: {
+				id: result.sender.user.id,
+				name: result.sender.user.name,
+			},
 			text: `${result.sender.user.name} isimli kullanicinin guncel bakiyesi ${result.sender.user.balance}₺.`,
 		},
 		{
 			type: 'notify',
 			id: Math.round(Math.random() * 1000),
+			user: {
+				id: result.recipient.user.id,
+				name: result.recipient.user.name,
+			},
 			text: `${result.recipient.user.name} isimli kullanicinin guncel bakiyesi ${result.recipient.user.balance}₺.`,
 		},
 		...state.historyState,
 	]);
 };
 
+// History Filtreleme fonksiyonu
+const filterHistory = () => {
+	renderHistoryList(filterType.value, parseInt(filterUser.value));
+};
+
+// Components
+// <li> Element Creator
+const Li = (props = {}) => {
+	let li = document.createElement('li');
+	li.className = `list-item ${props.className ? props.className : ''}`;
+	if (Array.isArray(props.text) && props.text.length > 0) {
+		for (item of props.text) li.appendChild(item);
+	} else {
+		li.textContent = props.text ? props.text : '';
+	}
+
+	return li;
+};
+
+// <span> Element Creator
+const Span = (props = {}) => {
+	let span = document.createElement('span');
+	span.className = 'list-item__span';
+	span.textContent = `${props.text ? props.text : ''}`;
+
+	return span;
+};
+
+// <button> Element Creator
+const Button = (props = {}) => {
+	let button = document.createElement('button');
+	button.className = 'list-item__button';
+	button.textContent = `${props.text ? props.text : ''}`;
+
+	return button;
+};
+
+// <option> Element Creator
+const Option = (props = {}) => {
+	let option = document.createElement('option');
+	option.value = props.id ? props.id : '';
+	props.selected ? option.setAttribute('selected', true) : '';
+	option.textContent = `${props.name}`;
+
+	return option;
+};
+
+// Renders
+const renderAccountList = () => {
+	// Kullanici listesi temizlenip guncelleniyor.
+	accountListEl.textContent = '';
+	for (let user of state.userData) {
+		let buttonEl = Button({ text: 'Sil' });
+		buttonEl.addEventListener('click', () => deleteUser(user.id, user.name), {
+			once: true,
+		});
+
+		accountListEl.appendChild(
+			Li({
+				text: [
+					Span({ text: user.name }),
+					Span({ text: `${user.balance}₺` }),
+					buttonEl,
+				],
+			})
+		);
+	}
+};
+
+const renderHistoryList = (filterType = 'all', filterUser = -1) => {
+	// History alani temizlenip guncelleniyor
+	historyListEl.textContent = '';
+	for (let item of state.historyState) {
+		if (filterType === 'all' && filterUser === -1) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		} else if (filterType === 'sender' && filterUser === -1 && item.sender) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		} else if (
+			filterType === 'recipient' &&
+			filterUser === -1 &&
+			item.recipient
+		) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		} else if (
+			filterType === 'all' &&
+			(item.sender?.id === filterUser ||
+				item.recipient?.id === filterUser ||
+				item.user?.id === filterUser)
+		) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		} else if (filterType === 'sender' && item.sender?.id === filterUser) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		} else if (
+			filterType === 'recipient' &&
+			item.recipient?.id === filterUser
+		) {
+			historyListEl.appendChild(
+				Li({
+					className: item.className ? item.className : '',
+					text: item.button
+						? [Span({ text: item.text }), item.button]
+						: `${item.text}`,
+				})
+			);
+		}
+	}
+};
+
+const renderOptions = () => {
+	// Her Render'da secim elemanlari temizleniyor
+	// ve varsayilan secenek giriliyor
+	transferSender.textContent = '';
+	transferSender.appendChild(
+		Option({ name: 'Gonderici Seciniz', selected: true })
+	);
+
+	transferRecipient.textContent = '';
+	transferRecipient.appendChild(
+		Option({ name: 'Alici Seciniz', selected: true })
+	);
+
+	filterUser.textContent = '';
+	filterUser.appendChild(
+		Option({ name: 'Kullanici Seciniz', id: -1, selected: true })
+	);
+
+	// FilterType'da digerlerinden farkli olarak
+	// Ilk secenek seciliyor
+	filterType.selectedIndex = 0;
+
+	// UserData'dan kullanici isimleri
+	// secenek olarak giriliyor.
+	for (let user of state.userData) {
+		transferSender.appendChild(Option(user));
+		transferRecipient.appendChild(Option(user));
+		filterUser.appendChild(Option(user));
+	}
+};
+
+const renderApp = () => {
+	// App render cagirildiginda
+	// Ekrandaki Uc alan yeniden olusturuluyor
+	renderAccountList();
+	renderHistoryList();
+	renderOptions();
+};
+
 // Form'lara submit event listener'i ekleniyor.
 userForm.addEventListener('submit', addNewUser);
 transferForm.addEventListener('submit', transfer);
+filterType.addEventListener('change', filterHistory);
+filterUser.addEventListener('change', filterHistory);

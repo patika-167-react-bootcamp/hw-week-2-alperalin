@@ -35,11 +35,11 @@
         <div class="container__right">
             <h2 class="container__sub-title">TRANSFER ISLEMI</h2>
             <form class="form form-transfer">
-                <select class="form__select" name="sender" id="transferSender">
-                    <option selected>Gonderici Seciniz</option>
+                <select class="form__select" name="sender" id="transferSender" required>
+                    <option value="" selected>Gonderici Seciniz</option>
                 </select>
-                <select class="form__select" name="recipient" id="transferRecipient">
-                    <option selected>Alici Seciniz</option>
+                <select class="form__select" name="recipient" id="transferRecipient" required>
+                    <option value="" selected>Alici Seciniz</option>
                 </select>
                 <input id="transferAmount" type="number" class="form__input" name="transferValue" value=""
                     placeholder="Gonderilecek miktar" autocomplete="off" required />
@@ -48,6 +48,19 @@
 
             <div class="history">
                 <h3 class="account__title">TARIHCE</h3>
+
+                <div class="filter">
+                    <h4 class="filter__title">Filtrele</h4>
+                    <select class="form__select" name="filterType" id="filterType" required>
+                        <option value="all" selected>Hepsi</option>
+                        <option value="sender">Gonderen</option>
+                        <option value="recipient">Gonderilen</option>
+                    </select>
+                    <select class="form__select" name="filterUser" id="filterUser" required>
+                        <option value="-1" selected>Kullanici Seciniz</option>
+                    </select>
+                </div>
+
                 <ul class="history__list"></ul>
             </div>
         </div>

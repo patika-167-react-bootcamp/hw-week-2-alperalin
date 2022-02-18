@@ -100,7 +100,8 @@ h4 {
 			outline: 0;
 		}
 
-		.form-transfer & {
+		.form-transfer &,
+		.filter & {
 			max-width: calc(33% - 5px);
 		}
 	}
@@ -135,7 +136,7 @@ h4 {
 .history {
 	display: flex;
 	flex-wrap: wrap;
-	justify-content: space-between;
+	align-items: center;
 	width: 100%;
 	margin: 50px 0 0 0;
 
@@ -205,5 +206,23 @@ h4 {
 				border-color: $buttonDeleteBgColor;
 			}
 		}
+	}
+}
+
+.filter {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	border: 1px solid $borderColor;
+	padding: 15px;
+	margin: 0 0 15px 0;
+	overflow: hidden;
+
+	&__title {
+		max-width: calc(25% - 5px);
+		width: 100%;
+		margin: 0;
 	}
 }
