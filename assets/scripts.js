@@ -271,7 +271,7 @@ const Li = (props = {}) => {
 	let li = document.createElement('li');
 	li.className = `list-item ${props.className ? props.className : ''}`;
 	if (Array.isArray(props.text) && props.text.length > 0) {
-		for (item of props.text) li.appendChild(item);
+		for (let item of props.text) li.appendChild(item);
 	} else {
 		li.textContent = props.text ? props.text : '';
 	}
